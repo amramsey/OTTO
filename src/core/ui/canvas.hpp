@@ -102,22 +102,28 @@ namespace otto::core::ui::vg {
 
   /// A positioned box
   struct Box {
-    Point p1 {0, 0};
-    Point p2 {0, 0};
+    float x = 0;
+    float y = 0;
+    float width = 0;
+    float height = 0;
 
     constexpr Box() = default;
 
-    constexpr Box(Point p1, Point p2) //
-      : p1 (p1), p2 (p2)
+    constexpr Box(float x, float y, float width, float height) //
+      : x(x), y(y), width(width), height(height)
     {}
 
     constexpr Box(Point p, Size s) //
-      : p1 (p), p2 (p - s.vec())
+      : x (p.x), y (p.y), width (s.w), height(s.h)
+    {}
+
+    constexpr Box(Point p1, Point p2) //
+      : Box(p1, Size(p2 - p1))
     {}
 
     constexpr Size size() const
     {
-      return Size{p2 - p1}.abs();
+      return {width, height};
     }
   };
 
@@ -175,7 +181,7 @@ namespace otto::core::ui::vg {
   }
 
   inline Colour Colour::dim(float amount) const {
-    float dim = 1 - amount;
+    float dim = std::clamp(1.f - amount,0.f,1.f);
     Colour ret;
     ret.r = std::clamp<uint8_t>(r * dim, 0x00, 0xFF);
     ret.g = std::clamp<uint8_t>(g * dim, 0x00, 0xFF);
@@ -396,6 +402,13 @@ namespace otto::core::ui::vg {
       return *this;
     }
 
+    Canvas& scaleTowards(float s, Point p) {
+      translate(p);
+      scale(s, s);
+      translate(-p);
+      return *this;
+    }
+
     Canvas& draw(Drawable &d) {
       d.draw(*this);
       return *this;
@@ -420,6 +433,14 @@ namespace otto::core::ui::vg {
       d.draw(*this);
       restore();
       return *this;
+    }
+
+    template<typename FuncRef>
+    Canvas& group(FuncRef&& func) {
+        save();
+        func();
+        restore();
+        return *this;
     }
 
     Canvas& callAt(Point p, const std::function<void(void)>& f) {

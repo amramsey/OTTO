@@ -31,7 +31,7 @@ namespace otto::service::ui {
 
     void error_callback(int error, const char* description)
     {
-      LOG_F(FATAL, "GLFW UI: {}", description);
+      LOG_F(ERROR, "GLFW UI: {}", description);
     }
 
   } // namespace
@@ -156,6 +156,7 @@ namespace otto::service::ui {
       glfwSwapBuffers(window);
 
       glfwPollEvents();
+      ui::impl::flush_events();
 
       debug_ui::draw_frame();
 
